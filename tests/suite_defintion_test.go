@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/gruntwork-io/terratest/modules/files"
+	"github.com/gruntwork-io/terratest/modules/logger"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	test_structure "github.com/gruntwork-io/terratest/modules/test-structure"
 	"github.com/stretchr/testify/suite"
@@ -29,7 +30,13 @@ import (
 var (
 	// A simple regex pattern to match an ARN
 	// https://regex101.com/library/pOfxYN
+	// Go does not allow regexp to be constants
 	ARN_PATTERN = regexp.MustCompile("^arn:(?P<Partition>[^:\n]*):(?P<Service>[^:\n]*):(?P<Region>[^:\n]*):(?P<AccountID>[^:\n]*):(?P<Ignore>(?P<ResourceType>[^:/\n]*)[:/])?(?P<Resource>.*)$")
+	// List of providers that can appear in a plan
+	// Go does not allow slices to be constants
+	APPROVED_PROVIDERS = []string{
+		"registry.terraform.io/hashicorp/aws",
+	}
 )
 
 // Define the suite, and absorb the built-in basic suite
@@ -38,14 +45,28 @@ var (
 type TerraTestSuite struct {
 	suite.Suite
 	TerraformOptions *terraform.Options
+	PlanStruct       *terraform.PlanStruct
+	ApplyIo          string
+}
+
+// Convenience method to avoid constantly dropping the suite scope in log calls
+// You can use
+// suite.Log(...)
+// instead of
+// logger.Log(suite.T(), ...)
+func (suite *TerraTestSuite) Log(args ...interface{}) {
+	logger.Log(suite.T(), args...)
 }
 
 // setup to do before any test runs
 func (suite *TerraTestSuite) SetupSuite() {
-	tempTestFolder := test_structure.CopyTerraformFolderToTemp(suite.T(), "../..", ".")
-	_ = files.CopyFile(path.Join("..", "..", ".tool-versions"), path.Join(tempTestFolder, ".tool-versions"))
+	// We need to copy to a tmp folder to avoid touching local files
+	tempTestFolder := test_structure.CopyTerraformFolderToTemp(suite.T(), "..", ".")
+	// This is required for asdf users
+	_ = files.CopyFile(path.Join("..", ".tool-versions"), path.Join(tempTestFolder, ".tool-versions"))
 	suite.TerraformOptions = terraform.WithDefaultRetryableErrors(suite.T(), &terraform.Options{
 		TerraformDir: tempTestFolder,
+		PlanFilePath: "terraform.tfplan",
 		Vars: map[string]interface{}{
 			"application":  "test",
 			"region":       "us-west-2",
@@ -53,7 +74,25 @@ func (suite *TerraTestSuite) SetupSuite() {
 			"env_instance": "000",
 		},
 	})
-	terraform.InitAndApplyAndIdempotent(suite.T(), suite.TerraformOptions)
+
+	// Using the ...E forms allows us to handle errors during the suite setup
+	// See https://github.com/stretchr/testify/issues/1123
+	// See https://github.com/stretchr/testify/issues/849
+
+	var planErr error
+	suite.PlanStruct, planErr = terraform.InitAndPlanAndShowWithStructE(suite.T(), suite.TerraformOptions)
+	if nil != planErr {
+		suite.Log(planErr)
+		defer suite.TearDownSuite()
+		suite.T().FailNow()
+	}
+	var applyErr error
+	suite.ApplyIo, applyErr = terraform.ApplyAndIdempotentE(suite.T(), suite.TerraformOptions)
+	if nil != applyErr {
+		suite.Log(applyErr)
+		defer suite.TearDownSuite()
+		suite.T().FailNow()
+	}
 }
 
 // TearDownAllSuite has a TearDownSuite method, which will run after all the tests in the suite have been run.
@@ -65,12 +104,4 @@ func (suite *TerraTestSuite) TearDownSuite() {
 // a normal test function and pass our suite to suite.Run
 func TestRunSuite(t *testing.T) {
 	suite.Run(t, new(TerraTestSuite))
-}
-
-// All methods that begin with "Test" are run as tests within a suite.
-func (suite *TerraTestSuite) TestOutput() {
-	output := terraform.Output(suite.T(), suite.TerraformOptions, "bucket_arn")
-
-	// Output contains only alphanumeric characters
-	suite.Regexp(ARN_PATTERN, output)
 }
