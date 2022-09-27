@@ -14,7 +14,6 @@
 
 package test
 
-// Basic imports
 import (
 	"path"
 	"testing"
@@ -45,15 +44,21 @@ func (suite *TerraTestSuite) Log(args ...interface{}) {
 	logger.Log(suite.T(), args...)
 }
 
-// setup to do before any test runs
+// This is run before _any_ test is run
+// It defines our working session, plans, and applies before executing tests
+// Failure here must defer a suite.TearDown() then register suite.T().FailNow()
 func (suite *TerraTestSuite) SetupSuite() {
 	// We need to copy to a tmp folder to avoid touching local files
 	tempTestFolder := test_structure.CopyTerraformFolderToTemp(suite.T(), "..", ".")
 	// This is required for asdf users
 	_ = files.CopyFile(path.Join("..", ".tool-versions"), path.Join(tempTestFolder, ".tool-versions"))
+	// Define the options for running Terraform
 	suite.TerraformOptions = terraform.WithDefaultRetryableErrors(suite.T(), &terraform.Options{
+		// Use the temp directory to run the TF
 		TerraformDir: tempTestFolder,
+		// Save the plan file so it can be reused
 		PlanFilePath: "terraform.tfplan",
+		// Vars for the module
 		Vars: map[string]interface{}{
 			"application":  "test",
 			"region":       "us-west-2",
@@ -66,6 +71,7 @@ func (suite *TerraTestSuite) SetupSuite() {
 	// See https://github.com/stretchr/testify/issues/1123
 	// See https://github.com/stretchr/testify/issues/849
 
+	// Plan and store its output in a Go struct for testing
 	var planErr error
 	suite.PlanStruct, planErr = terraform.InitAndPlanAndShowWithStructE(suite.T(), suite.TerraformOptions)
 	if nil != planErr {
@@ -73,6 +79,9 @@ func (suite *TerraTestSuite) SetupSuite() {
 		defer suite.TearDownSuite()
 		suite.T().FailNow()
 	}
+
+	// Apply twice to ensure idempotency
+	// Store the stdout/stderr for testing
 	var applyErr error
 	suite.ApplyIo, applyErr = terraform.ApplyAndIdempotentE(suite.T(), suite.TerraformOptions)
 	if nil != applyErr {
@@ -82,7 +91,7 @@ func (suite *TerraTestSuite) SetupSuite() {
 	}
 }
 
-// TearDownAllSuite has a TearDownSuite method, which will run after all the tests in the suite have been run.
+// This is run after _all_ tests are run (or if a failure is called)
 func (suite *TerraTestSuite) TearDownSuite() {
 	terraform.Destroy(suite.T(), suite.TerraformOptions)
 }

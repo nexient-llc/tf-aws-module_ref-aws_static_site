@@ -14,7 +14,6 @@
 
 package test
 
-// Basic imports
 import (
 	"regexp"
 
@@ -28,8 +27,9 @@ var (
 	ARN_PATTERN = regexp.MustCompile("^arn:(?P<Partition>[^:\n]*):(?P<Service>[^:\n]*):(?P<Region>[^:\n]*):(?P<AccountID>[^:\n]*):(?P<Ignore>(?P<ResourceType>[^:/\n]*)[:/])?(?P<Resource>.*)$")
 )
 
-// All methods that begin with "Test" are run as tests within a suite.
-func (suite *TerraTestSuite) TestOutput() {
+// Ensure the required bucket is created
+// TODO: this only checks its ARN is a valid ARN not infra state
+func (suite *TerraTestSuite) TestS3Bucket() {
 	output := terraform.Output(suite.T(), suite.TerraformOptions, "bucket_arn")
 	// Output contains only alphanumeric characters
 	suite.Regexp(ARN_PATTERN, output)

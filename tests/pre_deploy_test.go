@@ -22,7 +22,8 @@ var (
 	}
 )
 
-func (suite *TerraTestSuite) TestTerraformPlan() {
+// Ensure only allowed providers are used
+func (suite *TerraTestSuite) TestTerraformPlanProviders() {
 	// For each change in resource
 	for _, resourceChange := range suite.PlanStruct.RawPlan.ResourceChanges {
 		// The resource is on the approved list of providers
