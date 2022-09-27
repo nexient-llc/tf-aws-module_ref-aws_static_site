@@ -17,7 +17,6 @@ package test
 // Basic imports
 import (
 	"path"
-	"regexp"
 	"testing"
 
 	"github.com/gruntwork-io/terratest/modules/files"
@@ -25,18 +24,6 @@ import (
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	test_structure "github.com/gruntwork-io/terratest/modules/test-structure"
 	"github.com/stretchr/testify/suite"
-)
-
-var (
-	// A simple regex pattern to match an ARN
-	// https://regex101.com/library/pOfxYN
-	// Go does not allow regexp to be constants
-	ARN_PATTERN = regexp.MustCompile("^arn:(?P<Partition>[^:\n]*):(?P<Service>[^:\n]*):(?P<Region>[^:\n]*):(?P<AccountID>[^:\n]*):(?P<Ignore>(?P<ResourceType>[^:/\n]*)[:/])?(?P<Resource>.*)$")
-	// List of providers that can appear in a plan
-	// Go does not allow slices to be constants
-	APPROVED_PROVIDERS = []string{
-		"registry.terraform.io/hashicorp/aws",
-	}
 )
 
 // Define the suite, and absorb the built-in basic suite

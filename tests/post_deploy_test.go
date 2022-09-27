@@ -16,7 +16,16 @@ package test
 
 // Basic imports
 import (
+	"regexp"
+
 	"github.com/gruntwork-io/terratest/modules/terraform"
+)
+
+var (
+	// A simple regex pattern to match an ARN
+	// https://regex101.com/library/pOfxYN
+	// Go does not allow regexp to be constants
+	ARN_PATTERN = regexp.MustCompile("^arn:(?P<Partition>[^:\n]*):(?P<Service>[^:\n]*):(?P<Region>[^:\n]*):(?P<AccountID>[^:\n]*):(?P<Ignore>(?P<ResourceType>[^:/\n]*)[:/])?(?P<Resource>.*)$")
 )
 
 // All methods that begin with "Test" are run as tests within a suite.

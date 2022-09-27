@@ -14,7 +14,13 @@
 
 package test
 
-// Basic imports
+var (
+	// List of providers that can appear in a plan
+	// Go does not allow slices to be constants
+	APPROVED_PROVIDERS = []string{
+		"registry.terraform.io/hashicorp/aws",
+	}
+)
 
 func (suite *TerraTestSuite) TestTerraformPlan() {
 	// For each change in resource
