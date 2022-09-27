@@ -67,6 +67,16 @@ func (suite *TerraTestSuite) SetupSuite() {
 		},
 	})
 
+	// Handle plan/apply timeouts if we go over
+	timedOut := true
+	defer (func() {
+		if timedOut {
+			suite.Log("Apply timed out")
+			defer suite.TearDownSuite()
+			suite.T().FailNow()
+		}
+	})()
+
 	// Using the ...E forms allows us to handle errors during the suite setup
 	// See https://github.com/stretchr/testify/issues/1123
 	// See https://github.com/stretchr/testify/issues/849
@@ -89,6 +99,9 @@ func (suite *TerraTestSuite) SetupSuite() {
 		defer suite.TearDownSuite()
 		suite.T().FailNow()
 	}
+
+	// We have finished applying everything within the allotted time
+	timedOut = false
 }
 
 // This is run after _all_ tests are run (or if a failure is called)
