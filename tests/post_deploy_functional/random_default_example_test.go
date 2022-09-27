@@ -26,6 +26,12 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+var (
+	// A simple regex pattern to match an ARN
+	// https://regex101.com/library/pOfxYN
+	ARN_PATTERN = regexp.MustCompile("^arn:(?P<Partition>[^:\n]*):(?P<Service>[^:\n]*):(?P<Region>[^:\n]*):(?P<AccountID>[^:\n]*):(?P<Ignore>(?P<ResourceType>[^:/\n]*)[:/])?(?P<Resource>.*)$")
+)
+
 // Define the suite, and absorb the built-in basic suite
 // functionality from testify - including a T() method which
 // returns the current testing context
@@ -40,6 +46,12 @@ func (suite *TerraTestSuite) SetupSuite() {
 	_ = files.CopyFile(path.Join("..", "..", ".tool-versions"), path.Join(tempTestFolder, ".tool-versions"))
 	suite.TerraformOptions = terraform.WithDefaultRetryableErrors(suite.T(), &terraform.Options{
 		TerraformDir: tempTestFolder,
+		Vars: map[string]interface{}{
+			"application":  "test",
+			"region":       "us-west-2",
+			"env":          "dev",
+			"env_instance": "000",
+		},
 	})
 	terraform.InitAndApplyAndIdempotent(suite.T(), suite.TerraformOptions)
 }
@@ -57,8 +69,8 @@ func TestRunSuite(t *testing.T) {
 
 // All methods that begin with "Test" are run as tests within a suite.
 func (suite *TerraTestSuite) TestOutput() {
-	output := terraform.Output(suite.T(), suite.TerraformOptions, "string")
+	output := terraform.Output(suite.T(), suite.TerraformOptions, "bucket_arn")
 
 	// Output contains only alphanumeric characters
-	suite.Regexp(regexp.MustCompile("^[A-Za-z0-9]+$"), output)
+	suite.Regexp(ARN_PATTERN, output)
 }

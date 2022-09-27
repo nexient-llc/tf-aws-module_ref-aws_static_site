@@ -25,7 +25,7 @@ import (
 )
 
 var ApprovedProviders = []string{
-	"registry.terraform.io/hashicorp/random",
+	"registry.terraform.io/hashicorp/aws",
 }
 
 func TestRandomDefaultExample(t *testing.T) {
@@ -34,6 +34,12 @@ func TestRandomDefaultExample(t *testing.T) {
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir: tempTestFolder,
 		PlanFilePath: "terraform.tfplan",
+		Vars: map[string]interface{}{
+			"application":  "test",
+			"region":       "us-west-2",
+			"env":          "dev",
+			"env_instance": "000",
+		},
 	})
 
 	tfplan := terraform.InitAndPlanAndShowWithStruct(t, terraformOptions)

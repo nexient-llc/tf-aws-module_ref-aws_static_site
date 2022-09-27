@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-output "string" {
-  value = random_string.string.result
+output "bucket" {
+  value = module.bucket
+}
+
+output "bucket_arn" {
+  value = module.bucket.s3_bucket_arn
 }

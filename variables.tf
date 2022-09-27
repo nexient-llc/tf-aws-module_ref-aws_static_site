@@ -12,17 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-variable "length" {
-  type    = number
-  default = 24
+variable "application" {
+  type        = string
+  description = "The name of the application"
 }
 
-variable "number" {
-  type    = bool
-  default = true
+variable "region" {
+  type        = string
+  description = "The AWS region to deploy to (eg us-west-2)"
 }
 
-variable "special" {
-  type    = bool
-  default = false
+variable "env" {
+  type        = string
+  description = "The environment to deploy to (eg dev)"
+}
+
+variable "env_instance" {
+  type        = string
+  description = "The environment instance number (eg 123)"
 }

@@ -12,8 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-resource "random_string" "string" {
-  length  = var.length
-  number  = var.number
-  special = var.special
+locals {
+  name_prefix = "${var.application}-${replace(var.region, "-", "_")}-${var.env}-${var.env_instance}"
 }
+
+module "bucket" {
+  source  = "terraform-aws-modules/s3-bucket/aws"
+  version = "3.4.0"
+
+  bucket = "${replace(local.name_prefix, "_", "")}-s3-000"
+
+  # Ensure it's easy to replace
+  force_destroy = true
+
+  # Keep everything private
+  acl                     = "private"
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
