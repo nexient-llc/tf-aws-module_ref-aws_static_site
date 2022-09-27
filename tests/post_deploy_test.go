@@ -34,3 +34,11 @@ func (suite *TerraTestSuite) TestS3Bucket() {
 	// Output contains only alphanumeric characters
 	suite.Regexp(ARN_PATTERN, output)
 }
+
+// Ensure the required CloudFront distribution is created
+// TODO: this only checks its ARN is a valid ARN not infra state
+func (suite *TerraTestSuite) TestCloudFrontDistribution() {
+	output := terraform.Output(suite.T(), suite.TerraformOptions, "cloudfront_arn")
+	// Output contains only alphanumeric characters
+	suite.Regexp(ARN_PATTERN, output)
+}
