@@ -31,3 +31,21 @@ variable "env_instance" {
   type        = string
   description = "The environment instance number (eg 123)"
 }
+
+variable "default_root_object" {
+  type        = string
+  description = "The default item in the bucket to point to"
+  default     = "index.html"
+}
+
+variable "path_403" {
+  type        = string
+  description = "An alternative object path to point 403s to. If empty, defaults to the path of the var.default_root_object."
+  default     = ""
+}
+
+variable "path_404" {
+  type        = string
+  description = "An alternative object path to point 404s to. If empty, defaults to the path of the var.default_root_object."
+  default     = ""
+}

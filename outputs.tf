@@ -19,3 +19,11 @@ output "bucket" {
 output "bucket_arn" {
   value = module.bucket.s3_bucket_arn
 }
+
+output "cloudfront" {
+  value = module.cloudfront
+}
+
+output "cloudfront_arn" {
+  value = module.cloudfront.cloudfront_distribution_arn
+}
